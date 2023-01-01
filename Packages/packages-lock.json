@@ -1,5 +1,14 @@
 {
   "dependencies": {
+    "com.chua.prototype-utils": {
+      "version": "https://github.com/iamabigartist/UnityPrototypeUtils.git?path=/Assets/PrototypePackages/PrototypeUtils#dev",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.mathematics": "1.2.5"
+      },
+      "hash": "8249eaa2b2b61fbcf8855555b1b2bcd3d45c1a49"
+    },
     "com.unity.burst": {
       "version": "1.7.4",
       "depth": 1,
@@ -74,7 +83,7 @@
     },
     "com.unity.mathematics": {
       "version": "1.2.6",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.chua.prototype-utils": "https://github.com/iamabigartist/UnityPrototypeUtils.git?path=/Assets/PrototypePackages/PrototypeUtils#dev",
     "com.unity.collections": "1.2.4",
     "com.unity.feature.development": "1.0.1",
     "com.unity.timeline": "1.7.2",
