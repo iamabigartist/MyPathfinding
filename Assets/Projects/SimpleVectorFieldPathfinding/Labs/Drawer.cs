@@ -79,8 +79,12 @@ namespace SimpleVectorFieldPathfinding.Labs
 			agent_drawer.Draw((index, location) =>
 			{
 				var agent_pos = ruler.TextureLocationToWorldPosition(location, 0);
-				var agent_head = ruler.TextureLocationToWorldPosition(location + new float2(0, 0.5f), 0);
-				Handles.DrawAAPolyLine(3, agent_pos, agent_head);
+				var corner0 = ruler.TextureLocationToWorldPosition(location + new float2(0.5f, 0.5f), 0);
+				var corner1 = corner0;
+				var corner2 = corner0;
+				corner1.x = agent_pos.x;
+				corner2.z = agent_pos.z;
+				Handles.DrawAAPolyLine(3, agent_pos, corner1, corner0, corner2, agent_pos);
 			});
 
 		}
