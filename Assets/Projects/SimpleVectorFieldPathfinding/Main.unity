@@ -304,6 +304,9 @@ MonoBehaviour:
     m_NumColorKeys: 7
     m_NumAlphaKeys: 2
   agent_speed: 3
+  destination:
+    x: 250
+    y: 250
 --- !u!1001 &1009406550
 PrefabInstance:
   m_ObjectHideFlags: 0

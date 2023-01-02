@@ -5,7 +5,7 @@ using Utils.JobUtils;
 using Utils.JobUtils.Template;
 namespace SimpleVectorFieldPathfinding.Jobs
 {
-	public struct ScanDistance_Half : IJobForRunner
+	public struct ScanRoad_Half : IJobForRunner
 	{
 		public (int ExecuteLen, int InnerLoopBatchCount) ScheduleParam => (cur_visit_list.Length, 1);
 
@@ -19,6 +19,7 @@ namespace SimpleVectorFieldPathfinding.Jobs
 		NativeArray<int> obstacle_map;
 		NativeArray<bool> added_map;
 		NativeArray<int> distance_map;
+		NativeArray<int2> parent_map;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool JudgeCanAdd(int2 pos)
@@ -29,10 +30,11 @@ namespace SimpleVectorFieldPathfinding.Jobs
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		void AddToList(int2 pos)
+		void AddToList(int2 cur_pos, int2 neighbor_pos)
 		{
-			next_visit_list.AddNoResize(pos);
-			added_map[map_i[pos]] = true;
+			next_visit_list.AddNoResize(neighbor_pos);
+			added_map[map_i[neighbor_pos]] = true;
+			parent_map[map_i[neighbor_pos]] = cur_pos;
 		}
 
 		public void Execute(int i)
@@ -45,11 +47,11 @@ namespace SimpleVectorFieldPathfinding.Jobs
 			//gather neighbors
 			var x_neighbor_pos = cur_pos + new int2(visit_direction, 0);
 			var y_neighbor_pos = cur_pos + new int2(0, visit_direction);
-			if (JudgeCanAdd(x_neighbor_pos)) { AddToList(x_neighbor_pos); }
-			if (JudgeCanAdd(y_neighbor_pos)) { AddToList(y_neighbor_pos); }
+			if (JudgeCanAdd(x_neighbor_pos)) { AddToList(cur_pos, x_neighbor_pos); }
+			if (JudgeCanAdd(y_neighbor_pos)) { AddToList(cur_pos, y_neighbor_pos); }
 		}
 
-		public ScanDistance_Half(int CurDistance, bool PositiveDirection, NativeList<int2> CurVisitList, NativeList<int2> NextVisitList, Index2D MapI, NativeArray<int> ObstacleMap, NativeArray<bool> AddedMap, NativeArray<int> DistanceMap)
+		public ScanRoad_Half(int CurDistance, bool PositiveDirection, NativeList<int2> CurVisitList, NativeList<int2> NextVisitList, Index2D MapI, NativeArray<int> ObstacleMap, NativeArray<bool> AddedMap, NativeArray<int> DistanceMap, NativeArray<int2> ParentMap)
 		{
 			cur_distance = CurDistance;
 			visit_direction = PositiveDirection ? 1 : -1;
@@ -59,6 +61,7 @@ namespace SimpleVectorFieldPathfinding.Jobs
 			obstacle_map = ObstacleMap;
 			added_map = AddedMap;
 			distance_map = DistanceMap;
+			parent_map = ParentMap;
 		}
 	}
 }

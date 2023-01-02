@@ -10,8 +10,9 @@ namespace SimpleVectorFieldPathfinding
 	{
 		public Index2D map_i;
 		public NativeArray<int> obstacle_map;
-		public NativeArray<float2> vector_map;
+		public NativeArray<int2> parent_map;
 		public List<float2> agents;
+		public int2 destination;
 
 		void CheckEdge(float2 location, out float2 adjusted)
 		{
@@ -53,17 +54,25 @@ namespace SimpleVectorFieldPathfinding
 		void Move(float2 from, float distance, out float2 to)
 		{
 			var sample_location = (int2)floor(from);
-			var vector = vector_map[map_i[sample_location]];
+			var next_location = parent_map[map_i[sample_location]];
+			if (sample_location.Equals(destination) || next_location.Equals(new(-1, -1)))
+			{
+				to = from;
+				return;
+			}
+			var target = next_location + new float2(0.5f, 0.5f);
+			var vector = normalize(target - from);
 			to = from + vector * distance;
 			CheckEdge(to, out to);
 			CheckPenetration(to, out to);
 		}
-		public AgentDriver(int2 size, NativeArray<int> ObstacleMap, NativeArray<float2> VectorMap, List<float2> Agents)
+		public AgentDriver(int2 size, NativeArray<int> ObstacleMap, NativeArray<int2> ParentMap, List<float2> Agents, int2 Destination)
 		{
 			map_i = new(size);
 			obstacle_map = ObstacleMap;
-			vector_map = VectorMap;
+			parent_map = ParentMap;
 			agents = Agents;
+			destination = Destination;
 		}
 		public void Step(float distance)
 		{
