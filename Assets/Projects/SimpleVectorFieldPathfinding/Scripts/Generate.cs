@@ -1,43 +1,59 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using SimpleVectorFieldPathfinding.Jobs;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 using Utils.JobUtils;
 using Utils.JobUtils.Template;
 using static Unity.Mathematics.math;
+using static Unity.Mathematics.noise;
 namespace SimpleVectorFieldPathfinding
 {
 	public static class Generate
 	{
-		public static NativeArray<int> GenerateObstacleMap(int2 size, float obstacle_ratio, uint seed)
+		[Serializable]
+		public class CnoiseSampler : INoiseSampler<float2, float>
 		{
-			var rand_gen = new IndexRandGenerator(seed);
-			var map = new int[size.area()];
-			Parallel.For(0, map.Length, i =>
+			public float2 offset;
+			public float scale;
+			public CnoiseSampler(float2 Offset, float Scale)
 			{
-				rand_gen.Gen(i, out var rand);
-				map[i] = rand.NextFloat(0, 1) < obstacle_ratio ? 1 : 0;
+				offset = Offset;
+				scale = Scale;
+			}
+			public float2 AdjustInput(float2 ori_input) { return (ori_input + offset) * scale; }
+			public float AdjustOutput(float ori_result) { return (ori_result + 1) / 2f; }
+		}
+		public static NativeArray<int> GenerateObstacleMap(int2 size, float obstacle_ratio, CnoiseSampler sampler)
+		{
+			var map_i = new Index2D(size);
+			var obstacle_map = new int[size.area()];
+			Parallel.For(0, obstacle_map.Length, i =>
+			{
+				float2 pos = map_i[i];
+				obstacle_map[i] = sampler.AdjustOutput(cnoise(sampler.AdjustInput(pos))) < obstacle_ratio ? 1 : 0;
 			});
-			return new(map, Allocator.Persistent);
+			return new(obstacle_map, Allocator.Persistent);
 		}
 
-		public static NativeArray<float3> GenMapDisplay(int2 size, NativeArray<int> map)
+		public static NativeArray<float3> GenMapDisplay(int2 size, NativeArray<int> obstacle_map, NativeArray<int> distance_map, Gradient gradient, float max_distance)
 		{
 			var rgb = new NativeArray<float3>(size.area(), Allocator.Temp);
-			Parallel.For(0, map.Length, i =>
+			Parallel.For(0, size.area(), i =>
 			{
-				if (map[i] == 1) { rgb[i] = new(0, 0, 0); }
-				else if (map[i] == 0)
+				if (obstacle_map[i] == 1) { rgb[i] = new(0, 0, 0); }
+				else if (obstacle_map[i] == 0)
 				{
-					rgb[i] = new(0f, 0.7f, 0f);
+					rgb[i] = gradient.Evaluate(distance_map[i] / max_distance).f3();
 				}
 			});
 			return rgb;
 		}
 
 
-		public static NativeArray<int> GenerateDistanceMap(int2 size, NativeArray<int> obstacle_map, int2 start_pos)
+		public static NativeArray<int> GenerateDistanceMap(int2 size, NativeArray<int> obstacle_map, int2 start_pos, out int max_distance)
 		{
 			//Declare and allocate memories
 			var map_i = new Index2D(size);
@@ -75,6 +91,8 @@ namespace SimpleVectorFieldPathfinding
 			added_map.Dispose();
 			visit_list_0.Dispose();
 			visit_list_1.Dispose();
+
+			max_distance = cur_distance;
 
 			return return_map;
 		}

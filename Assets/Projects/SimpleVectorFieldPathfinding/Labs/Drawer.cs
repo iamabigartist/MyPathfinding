@@ -5,15 +5,18 @@ using UnityEditor;
 using UnityEngine;
 using Utils.DisplayUtils;
 using Utils.JobUtils;
+using static SimpleVectorFieldPathfinding.Generate;
 using static Unity.Mathematics.math;
 namespace SimpleVectorFieldPathfinding.Labs
 {
 	public class Drawer : MonoBehaviour
 	{
 		public TextureTester tester;
-		public int2 size;
-		public float obstacle_ratio;
 		public uint seed;
+		public int2 size;
+		public CnoiseSampler sampler;
+		public float obstacle_ratio;
+		public Gradient gradient;
 		public float agent_speed;
 		NativeArray<int> obstacle_map;
 		NativeArray<int> distance_map;
@@ -29,9 +32,9 @@ namespace SimpleVectorFieldPathfinding.Labs
 
 		void Start()
 		{
-			obstacle_map = Generate.GenerateObstacleMap(size, obstacle_ratio, seed);
-			distance_map = Generate.GenerateDistanceMap(size, obstacle_map, new(10, 10));
-			vector_map = Generate.GenerateVectorMap(size, obstacle_map, distance_map);
+			obstacle_map = GenerateObstacleMap(size, obstacle_ratio, sampler);
+			distance_map = GenerateDistanceMap(size, obstacle_map, new(250, 250), out var max_distance);
+			vector_map = GenerateVectorMap(size, obstacle_map, distance_map);
 			var rand_gen = new IndexRandGenerator(100);
 			agent_driver = new(size, obstacle_map, vector_map,
 				Enumerable.Range(0, 100).Select(i =>
@@ -39,7 +42,7 @@ namespace SimpleVectorFieldPathfinding.Labs
 					rand_gen.Gen(i, out var rand);
 					return rand.NextFloat2(new(0, 0), size - new int2(1, 1));
 				}).ToList());
-			var map_display = Generate.GenMapDisplay(size, obstacle_map);
+			var map_display = GenMapDisplay(size, obstacle_map, distance_map, gradient, max_distance);
 			tester.InitTexture(size);
 			tester.SetTextureSlice(map_display, 0);
 			tester.ApplyTexture();
@@ -63,17 +66,21 @@ namespace SimpleVectorFieldPathfinding.Labs
 			var cur_transform = transform;
 			ruler.cur_height = cur_transform.position.y;
 			ruler.cur_scale = cur_transform.localScale;
+
+			Handles.color = Color.black;
 			map_drawer.Draw(map_draw_center, 10, 0, (index, location) =>
 			{
-				var label_pos = ruler.TextureLocationToWorldPosition(location + new float2(0, 1), 0);
-				var vector_pos = ruler.TextureLocationToWorldPosition(location + new float2(0.5f, 0.5f), 0);
-				Handles.color = Color.black;
-				int distance = distance_map[index];
-				Handles.Label(label_pos, obstacle_map[index] == 0 ?
-					$"<color=black>{distance}</color>" : "<color=red>inf</color>");
-				var vector = ruler.TextureVectorToWorldVector(new(sin(distance), cos(distance))) * 0.3f;
-				Handles.DrawLine(vector_pos, vector_pos + vector);
-
+				if (obstacle_map[index] == 0)
+				{
+					var label_pos = ruler.TextureLocationToWorldPosition(location + new float2(0, 1), 0);
+					var vector_pos = ruler.TextureLocationToWorldPosition(location + new float2(0.5f, 0.5f), 0);
+					var cube_size = (label_pos.x - vector_pos.x) / 20f;
+					int distance = distance_map[index];
+					Handles.Label(label_pos, $"<color=black>{distance}</color>");
+					var vector = ruler.TextureVectorToWorldVector(new(sin(distance), cos(distance))) * 0.5f;
+					Handles.DrawSolidDisc(vector_pos, Vector3.up, cube_size);
+					Handles.DrawLine(vector_pos, vector_pos + vector);
+				}
 			});
 
 			Handles.color = Color.blue;
