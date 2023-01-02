@@ -51,11 +51,12 @@ namespace SimpleVectorFieldPathfinding
 			return rgb;
 		}
 
-		public static NativeArray<int> GenerateDistanceMap(int2 size, NativeArray<int> obstacle_map, int2 start_pos, out int max_distance)
+		public static void GeneratePath(int2 size, NativeArray<int> obstacle_map, int2 start_pos, out int MaxDistance, out NativeArray<int> DistanceMap, out NativeArray<int2> ParentMap)
 		{
 			//Declare and allocate memories
 			var map_i = new Index2D(size);
-			var distance_map = new NativeArray<int>(Enumerable.Repeat(-1, size.area()).ToArray(), Allocator.TempJob); //Initialise with -1
+			var distance_map = new NativeArray<int>(size.area(), Allocator.TempJob);
+			var parent_map = new NativeArray<int2>(Enumerable.Repeat(new int2(-1, -1), size.area()).ToArray(), Allocator.TempJob);
 			var added_map = new NativeArray<bool>(size.area(), Allocator.TempJob);
 			var visit_list_0 = new NativeList<int2>(1, Allocator.TempJob);
 			var visit_list_1 = new NativeList<int2>(4, Allocator.TempJob);
@@ -72,8 +73,8 @@ namespace SimpleVectorFieldPathfinding
 			while (cur_visit_list.Length > 0)
 			{
 				//Scan twice, one for positive directions, another for negative ones
-				JobFor<ScanDistance_Half>.PlanByRef(new(cur_distance, true, cur_visit_list, next_visit_list, map_i, obstacle_map, added_map, distance_map), ref deps, out var job_a);
-				JobFor<ScanDistance_Half>.PlanByRef(new(cur_distance, false, cur_visit_list, next_visit_list, map_i, obstacle_map, added_map, distance_map), ref deps, out var job_b);
+				JobFor<ScanRoad_Half>.PlanByRef(new(cur_distance, true, cur_visit_list, next_visit_list, map_i, obstacle_map, added_map, distance_map, parent_map), ref deps, out var job_a);
+				JobFor<ScanRoad_Half>.PlanByRef(new(cur_distance, false, cur_visit_list, next_visit_list, map_i, obstacle_map, added_map, distance_map, parent_map), ref deps, out var job_b);
 				deps.Complete();
 
 				//Next round prepare
@@ -84,23 +85,16 @@ namespace SimpleVectorFieldPathfinding
 				next_visit_list.SetCapacity(cur_visit_list.Length * 3); //at most 3 neighbor collected
 			}
 
-			var return_map = new NativeArray<int>(distance_map, Allocator.Persistent);
+			MaxDistance = cur_distance;
+			DistanceMap = new(distance_map, Allocator.Persistent);
+			ParentMap = new(parent_map, Allocator.Persistent);
+
 			distance_map.Dispose();
+			parent_map.Dispose();
 			added_map.Dispose();
 			visit_list_0.Dispose();
 			visit_list_1.Dispose();
-
-			max_distance = cur_distance;
-
-			return return_map;
 		}
 
-		public static NativeArray<float2> GenerateVectorMap(int2 size, NativeArray<int> distance_map)
-		{
-			var deps = new JobHandle();
-			JobFor<GenVectorMap>.Plan(new(new(size), distance_map, out var vector_map), ref deps);
-			deps.Complete();
-			return new(vector_map, Allocator.Persistent);
-		}
 	}
 }
