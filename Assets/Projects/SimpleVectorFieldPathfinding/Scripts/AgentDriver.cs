@@ -10,7 +10,7 @@ namespace SimpleVectorFieldPathfinding
 	{
 		public Index2D map_i;
 		public NativeArray<int> obstacle_map;
-		public float2[] vector_map;
+		public NativeArray<float2> vector_map;
 		public List<float2> agents;
 
 		void CheckEdge(float2 location, out float2 adjusted)
@@ -58,7 +58,7 @@ namespace SimpleVectorFieldPathfinding
 			CheckEdge(to, out to);
 			CheckPenetration(to, out to);
 		}
-		public AgentDriver(int2 size, NativeArray<int> ObstacleMap, float2[] VectorMap, List<float2> Agents)
+		public AgentDriver(int2 size, NativeArray<int> ObstacleMap, NativeArray<float2> VectorMap, List<float2> Agents)
 		{
 			map_i = new(size);
 			obstacle_map = ObstacleMap;

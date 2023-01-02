@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using SimpleVectorFieldPathfinding.Jobs;
 using Unity.Collections;
@@ -7,7 +8,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using Utils.JobUtils;
 using Utils.JobUtils.Template;
-using static Unity.Mathematics.math;
 using static Unity.Mathematics.noise;
 namespace SimpleVectorFieldPathfinding
 {
@@ -37,7 +37,6 @@ namespace SimpleVectorFieldPathfinding
 			});
 			return new(obstacle_map, Allocator.Persistent);
 		}
-
 		public static NativeArray<float3> GenMapDisplay(int2 size, NativeArray<int> obstacle_map, NativeArray<int> distance_map, Gradient gradient, float max_distance)
 		{
 			var rgb = new NativeArray<float3>(size.area(), Allocator.Temp);
@@ -52,12 +51,11 @@ namespace SimpleVectorFieldPathfinding
 			return rgb;
 		}
 
-
 		public static NativeArray<int> GenerateDistanceMap(int2 size, NativeArray<int> obstacle_map, int2 start_pos, out int max_distance)
 		{
 			//Declare and allocate memories
 			var map_i = new Index2D(size);
-			var distance_map = new NativeArray<int>(size.area(), Allocator.TempJob);
+			var distance_map = new NativeArray<int>(Enumerable.Repeat(-1, size.area()).ToArray(), Allocator.TempJob); //Initialise with -1
 			var added_map = new NativeArray<bool>(size.area(), Allocator.TempJob);
 			var visit_list_0 = new NativeList<int2>(1, Allocator.TempJob);
 			var visit_list_1 = new NativeList<int2>(4, Allocator.TempJob);
@@ -97,22 +95,12 @@ namespace SimpleVectorFieldPathfinding
 			return return_map;
 		}
 
-		public static float2[] GenerateVectorMap(int2 size, NativeArray<int> obstacle_map, NativeArray<int> distance_map)
+		public static NativeArray<float2> GenerateVectorMap(int2 size, NativeArray<int> distance_map)
 		{
-			var map = new float2[size.area()];
-			Parallel.For(0, map.Length, i =>
-			{
-				var distance = distance_map[i];
-				if (obstacle_map[i] == 0)
-				{
-					map[i] = normalize(new float2(sin(distance), cos(distance)));
-				}
-				else
-				{
-					map[i] = new(0, 0);
-				}
-			});
-			return map;
+			var deps = new JobHandle();
+			JobFor<GenVectorMap>.Plan(new(new(size), distance_map, out var vector_map), ref deps);
+			deps.Complete();
+			return new(vector_map, Allocator.Persistent);
 		}
 	}
 }
