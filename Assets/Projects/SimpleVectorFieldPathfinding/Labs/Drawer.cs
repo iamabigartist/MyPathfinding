@@ -1,4 +1,5 @@
 using System.Linq;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
@@ -14,8 +15,8 @@ namespace SimpleVectorFieldPathfinding.Labs
 		public float obstacle_ratio;
 		public uint seed;
 		public float agent_speed;
-		int[] obstacle_map;
-		int[] distance_map;
+		NativeArray<int> obstacle_map;
+		NativeArray<int> distance_map;
 		float2[] vector_map;
 		AgentDriver agent_driver;
 
@@ -29,7 +30,7 @@ namespace SimpleVectorFieldPathfinding.Labs
 		void Start()
 		{
 			obstacle_map = Generate.GenerateObstacleMap(size, obstacle_ratio, seed);
-			distance_map = Generate.GenerateDistanceMap(size, obstacle_map);
+			distance_map = Generate.GenerateDistanceMap(size, obstacle_map, new(10, 10));
 			vector_map = Generate.GenerateVectorMap(size, obstacle_map, distance_map);
 			var rand_gen = new IndexRandGenerator(100);
 			agent_driver = new(size, obstacle_map, vector_map,
