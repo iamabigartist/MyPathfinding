@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.Collections;
 using Unity.Mathematics;
 using Utils.JobUtils;
 using static Unity.Mathematics.math;
@@ -8,7 +9,7 @@ namespace SimpleVectorFieldPathfinding
 	public class AgentDriver
 	{
 		public Index2D map_i;
-		public int[] obstacle_map;
+		public NativeArray<int> obstacle_map;
 		public float2[] vector_map;
 		public List<float2> agents;
 
@@ -48,7 +49,7 @@ namespace SimpleVectorFieldPathfinding
 			var changed = cur_loc != sample_location;
 			adjusted = changed.x || changed.y ? cur_loc : location;
 		}
-		
+
 		void Move(float2 from, float distance, out float2 to)
 		{
 			var sample_location = (int2)floor(from);
@@ -57,7 +58,7 @@ namespace SimpleVectorFieldPathfinding
 			CheckEdge(to, out to);
 			CheckPenetration(to, out to);
 		}
-		public AgentDriver(int2 size, int[] ObstacleMap, float2[] VectorMap, List<float2> Agents)
+		public AgentDriver(int2 size, NativeArray<int> ObstacleMap, float2[] VectorMap, List<float2> Agents)
 		{
 			map_i = new(size);
 			obstacle_map = ObstacleMap;

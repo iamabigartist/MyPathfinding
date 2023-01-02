@@ -266,7 +266,7 @@ MonoBehaviour:
   size:
     x: 500
     y: 500
-  obstacle_ratio: 0.05
+  obstacle_ratio: 0.2
   seed: 10
   agent_speed: 3
 --- !u!1001 &1009406550

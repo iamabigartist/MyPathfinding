@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 namespace SimpleVectorFieldPathfinding
 {
@@ -9,6 +10,9 @@ namespace SimpleVectorFieldPathfinding
 		{
 			agents = Agents;
 		}
+
+		NativeHashSet<int2> set;
+
 		public delegate void DrawAgent(int index, float2 agent_location);
 		public void Draw(DrawAgent DrawAgentFunction)
 		{
