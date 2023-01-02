@@ -27,5 +27,9 @@ namespace Utils.DisplayUtils
 			var v_z = texture_vector.y / size.y * cur_scale.z;
 			return new(v_x, 0, v_z);
 		}
+		public float TextureLengthToWorldLength_X(float length)
+		{
+			return length / size.x * cur_scale.x;
+		}
 	}
 }

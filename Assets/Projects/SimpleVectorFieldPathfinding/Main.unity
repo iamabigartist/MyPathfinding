@@ -270,7 +270,7 @@ MonoBehaviour:
   sampler:
     offset:
       x: 206.72
-      y: 20
+      y: 24.62
     scale: 0.1
   obstacle_ratio: 0.47
   gradient:

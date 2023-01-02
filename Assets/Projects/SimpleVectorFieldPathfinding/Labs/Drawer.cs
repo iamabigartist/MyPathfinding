@@ -73,7 +73,7 @@ namespace SimpleVectorFieldPathfinding.Labs
 				{
 					var label_pos = ruler.TextureLocationToWorldPosition(location + new float2(0, 1), 0);
 					var vector_pos = ruler.TextureLocationToWorldPosition(location + new float2(0.5f, 0.5f), 0);
-					var cube_size = (label_pos.x - vector_pos.x) / 20f;
+					var cube_size = ruler.TextureLengthToWorldLength_X(0.5f) / 20f;
 					int distance = distance_map[i];
 					Handles.Label(label_pos, $"<color=black>{distance}</color>");
 					var vector = ruler.TextureVectorToWorldVector(vector_map[i]) * 0.5f;
@@ -85,13 +85,13 @@ namespace SimpleVectorFieldPathfinding.Labs
 			Handles.color = Color.blue;
 			agent_drawer.Draw((index, location) =>
 			{
-				var agent_pos = ruler.TextureLocationToWorldPosition(location, 0);
-				var corner0 = ruler.TextureLocationToWorldPosition(location + new float2(0.5f, 0.5f), 0);
-				var corner1 = corner0;
-				var corner2 = corner0;
-				corner1.x = agent_pos.x;
-				corner2.z = agent_pos.z;
-				Handles.DrawAAPolyLine(3, agent_pos, corner1, corner0, corner2, agent_pos);
+				var corner_0 = ruler.TextureLocationToWorldPosition(location + new float2(0.1f, 0.1f), 0);
+				var corner_1 = ruler.TextureLocationToWorldPosition(location - new float2(0.1f, 0.1f), 0);
+				var corner_2 = ruler.TextureLocationToWorldPosition(location + new float2(-0.1f, 0.1f), 0);
+				var corner_3 = ruler.TextureLocationToWorldPosition(location - new float2(-0.1f, 0.1f), 0);
+				// Handles.Draw(agent_pos, Vector3.up, 0.1f);
+				Handles.DrawAAPolyLine(3, corner_0, corner_1);
+				Handles.DrawAAPolyLine(3, corner_2, corner_3);
 			});
 
 		}
