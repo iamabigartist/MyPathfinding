@@ -14,43 +14,6 @@ namespace SimpleVectorFieldPathfinding
 		public List<float2> agents;
 		public int2 destination;
 
-		void CheckEdge(float2 location, out float2 adjusted)
-		{
-			var sample_location = (int2)floor(location);
-			var cur_loc = sample_location;
-			if (cur_loc.x < 0)
-			{
-				cur_loc.x += 1;
-			}
-			if (cur_loc.y < 0)
-			{
-				cur_loc.y += 1;
-			}
-			if (cur_loc.x >= map_i.Size.x)
-			{
-				cur_loc.x -= 1;
-			}
-			if (cur_loc.y >= map_i.Size.y)
-			{
-				cur_loc.y -= 1;
-			}
-			var changed = cur_loc != sample_location;
-			adjusted = changed.x || changed.y ? cur_loc : location;
-		}
-
-		void CheckPenetration(float2 location, out float2 adjusted)
-		{
-			var sample_location = (int2)floor(location);
-			var cur_loc = sample_location;
-			if (obstacle_map[map_i[sample_location]] == 1)
-			{
-				var round_location = (int2)round(location);
-				cur_loc += 2 * (sample_location - round_location) - 1;
-			}
-			var changed = cur_loc != sample_location;
-			adjusted = changed.x || changed.y ? cur_loc : location;
-		}
-
 		void Move(float2 from, float distance, out float2 to)
 		{
 			var sample_location = (int2)floor(from);
@@ -63,16 +26,16 @@ namespace SimpleVectorFieldPathfinding
 			var target = next_location + new float2(0.5f, 0.5f);
 			var vector = normalize(target - from);
 			to = from + vector * distance;
-			CheckEdge(to, out to);
-			CheckPenetration(to, out to);
+			if (obstacle_map[map_i[(int2)floor(to)]] == 1)
+			{
+				to = sample_location + new float2(0.5f, 0.5f);
+			}
 		}
-		public AgentDriver(int2 size, NativeArray<int> ObstacleMap, NativeArray<int2> ParentMap, List<float2> Agents, int2 Destination)
+		public AgentDriver(int2 size, NativeArray<int> ObstacleMap, List<float2> Agents)
 		{
 			map_i = new(size);
 			obstacle_map = ObstacleMap;
-			parent_map = ParentMap;
 			agents = Agents;
-			destination = Destination;
 		}
 		public void Step(float distance)
 		{

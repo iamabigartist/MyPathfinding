@@ -265,8 +265,8 @@ MonoBehaviour:
   tester: {fileID: 1009406552}
   seed: 100
   size:
-    x: 500
-    y: 500
+    x: 1000
+    y: 1000
   sampler:
     offset:
       x: 206.72
@@ -303,7 +303,7 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 7
     m_NumAlphaKeys: 2
-  agent_speed: 3
+  agent_speed: 10
   destination:
     x: 250
     y: 250

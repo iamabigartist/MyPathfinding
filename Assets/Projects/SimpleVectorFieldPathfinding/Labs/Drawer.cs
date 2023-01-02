@@ -43,16 +43,14 @@ namespace SimpleVectorFieldPathfinding.Labs
 			parent_map.Dispose();
 		}
 
-		void ChooseRandomDestination()
+		int2 ChooseRandomAvailableLocation(Random rand)
 		{
-			var rand = new Random(100);
 			while (true)
 			{
 				var pos = rand.NextInt2(new(0, 0), size);
 				if (obstacle_map[map_i[pos]] == 0)
 				{
-					destination = pos;
-					break;
+					return pos;
 				}
 			}
 		}
@@ -65,6 +63,7 @@ namespace SimpleVectorFieldPathfinding.Labs
 			tester.SetTextureSlice(map_display, 0);
 			tester.ApplyTexture();
 			agent_driver.parent_map = parent_map;
+			agent_driver.destination = destination;
 		}
 
 	#endregion
@@ -83,16 +82,17 @@ namespace SimpleVectorFieldPathfinding.Labs
 			ruler = new(size);
 			map_drawer = new(ruler);
 
-			GeneratePath();
-
 			var rand_gen = new IndexRandGenerator(100);
-			agent_driver = new(size, obstacle_map, parent_map,
-				Enumerable.Range(0, 100).Select(i =>
+			agent_driver = new(size, obstacle_map,
+				Enumerable.Range(0, 1000).Select(i =>
 				{
 					rand_gen.Gen(i, out var rand);
-					return rand.NextFloat2(new(0, 0), size - new int2(1, 1));
-				}).ToList(), destination);
+					return ChooseRandomAvailableLocation(rand) + new float2(0.5f, 0.5f);
+				}).ToList());
 			agent_drawer = new(agent_driver.agents);
+
+			destination = ChooseRandomAvailableLocation(new(seed));
+			GeneratePath();
 
 			tester.OnHoverTexture += Tuple =>
 			{
@@ -105,9 +105,12 @@ namespace SimpleVectorFieldPathfinding.Labs
 		{
 			if (Input.GetKeyDown(KeyCode.Mouse0))
 			{
-				destination = mouse_hover_location;
-				ClearPathMem();
-				GeneratePath();
+				if (obstacle_map[map_i[mouse_hover_location]] == 0)
+				{
+					destination = mouse_hover_location;
+					ClearPathMem();
+					GeneratePath();
+				}
 			}
 
 			agent_driver.Step(Time.deltaTime * agent_speed);
@@ -128,14 +131,16 @@ namespace SimpleVectorFieldPathfinding.Labs
 					var vector_pos = ruler.TextureLocationToWorldPosition(location + new float2(0.5f, 0.5f), 0);
 					var cube_size = ruler.TextureLengthToWorldLength_X(0.5f) / 20f;
 					int distance = distance_map[i];
-					Handles.Label(label_pos, $"<color=black>{distance}</color>");
 					var next_pos = ruler.TextureLocationToWorldPosition(parent_map[i] + new float2(0.5f, 0.5f), 0);
 					var vector = (next_pos - vector_pos) * 0.5f;
 					Handles.DrawSolidDisc(vector_pos, Vector3.up, cube_size);
 					Handles.DrawLine(vector_pos, vector_pos + vector);
+					
+					Handles.Label(label_pos, $"<color=black>{distance}</color>");
+
 				}
 			});
-
+			
 			Handles.color = Color.blue;
 			agent_drawer.Draw((index, location) =>
 			{
